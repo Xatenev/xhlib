@@ -7,6 +7,8 @@
 
 #include "xhlib.h"
 
+int xhLastError = 0;
+
 /**
  * Initialize a handle
  */
@@ -15,18 +17,20 @@ EXPORT HANDLE xhInitialize(char procName[])
     DWORD windowId;
     HWND window = FindWindowA(NULL, procName);
 
-    if(window == NULL) {
-        setXhLastError(XH_ERR_WINDOW_NOT_FOUND);
-        return;
+    if (window == NULL)
+    {
+        xhSetLastError(XH_ERR_WINDOW_NOT_FOUND);
+        return NULL;
     }
 
     GetWindowThreadProcessId(window, &windowId);
 
     HANDLE handle = OpenProcess(PROCESS_ALL_ACCESS, FALSE, windowId);
 
-    if(handle == NULL) {
-        setXhLastError(XH_ERR_PROCESS_NOT_FOUND);
-        return;
+    if (handle == NULL)
+    {
+        xhSetLastError(XH_ERR_PROCESS_NOT_FOUND);
+        return NULL;
     }
 
     return handle;
@@ -45,7 +49,8 @@ EXPORT void xhReadString(HANDLE proc, uintptr_t addr, int offsets[], char *buffe
 /**
  * Write a string that is 4byte (DWORD)
  */
-EXPORT void xhWriteString(HANDLE proc, uintptr_t addr, int offsets[], char *buffer) {
+EXPORT void xhWriteString(HANDLE proc, uintptr_t addr, int offsets[], char *buffer)
+{
     void *ptr = xhResolvePointer(proc, addr, offsets);
 
     WriteProcessMemory(proc, ptr, buffer, strlen(buffer) + 1, NULL); // add 1 for null terminator
@@ -67,10 +72,40 @@ EXPORT DWORD xhReadInteger4B(HANDLE proc, uintptr_t addr, int offsets[])
 /**
  * Write an integer that is 4byte (DWORD)
  */
-EXPORT void xhWriteInteger4B(HANDLE proc, uintptr_t addr, int offsets[], DWORD value) {
+EXPORT void xhWriteInteger4B(HANDLE proc, uintptr_t addr, int offsets[], DWORD value)
+{
     void *ptr = xhResolvePointer(proc, addr, offsets);
 
     WriteProcessMemory(proc, ptr, &value, sizeof(value), NULL);
+}
+
+/** 
+ * Export a DLL into a remote process
+ */
+EXPORT void xhInjectDLL(HANDLE proc, char *dllPath)
+{
+    LPVOID dllPathAddressInRemoteMemory = VirtualAllocEx(proc, NULL, strlen(dllPath), MEM_RESERVE | MEM_COMMIT, PAGE_EXECUTE_READWRITE);
+
+    BOOL successWrite = WriteProcessMemory(proc, dllPathAddressInRemoteMemory, dllPath, strlen(dllPath), NULL);
+
+    if (!successWrite)
+    {
+        xhSetLastError(XH_ERR_DLL_WPM_FAIL);
+    }
+
+    // Returns a pointer to the LoadLibrary address.
+    // This will be the same on the remote process as in our current process.
+    LPVOID loadLibraryAddress = (LPVOID)GetProcAddress(GetModuleHandle("kernel32.dll"), "LoadLibraryA");
+
+    if (loadLibraryAddress == NULL)
+    {
+        xhSetLastError(XH_ERR_DLL_LOAD_LIBRARY_FAIL);
+    }
+    HANDLE remoteThread = CreateRemoteThread(proc, NULL, 0, (LPTHREAD_START_ROUTINE)loadLibraryAddress, dllPathAddressInRemoteMemory, 0, NULL);
+
+    if(remoteThread == NULL) {
+        xhSetLastError(XH_ERR_CREATE_THREAD_FAIL);
+    }
 }
 
 /**
@@ -96,7 +131,7 @@ EXPORT void *xhResolvePointer(HANDLE proc, uintptr_t addr, int offsets[])
 
 /**
  * List all process names
- */ 
+ */
 EXPORT BOOL xhListProcessNames()
 {
     DWORD processes[1024], cbNeeded;
@@ -121,19 +156,20 @@ EXPORT BOOL xhListProcessNames()
 
 /**
  * List all window names
- */ 
+ */
 EXPORT BOOL xhListWindowNames()
 {
     puts("Window List");
     puts("--------------------------------------------");
-    EnumWindows(enumWindowCallback, NULL);
+    EnumWindows(enumWindowCallback, 0);
     puts("--------------------------------------------");
 
     return TRUE;
 }
 
-EXPORT unsigned int xhGetLastError() {
-    return xhLastError;
+EXPORT void xhPrintLastError()
+{
+    printf("XH Error: %d, Last Windows API Error: %d\nxhlib.h for XH errors\nhttps://docs.microsoft.com/en-us/windows/desktop/debug/system-error-codes for WINAPI errors\n", xhLastError, GetLastError());
 }
 
 /* Not exported */
@@ -180,6 +216,7 @@ BOOL CALLBACK enumWindowCallback(HWND hWnd, LPARAM lparam)
     return TRUE;
 }
 
-void setXhLastError(int errorId) {
+void xhSetLastError(int errorId)
+{
     xhLastError = errorId;
 }
