@@ -3,9 +3,14 @@
 #define EXPORT __declspec(dllexport)
 
 EXPORT HANDLE xhInitialize(char procName[]);
+
+
+EXPORT void xhReadString(HANDLE proc, uintptr_t addr, int offsets[], char* buffer, int bufferSize);
+EXPORT void xhWriteString(HANDLE proc, uintptr_t addr, int offsets[], char *buffer);
+
 EXPORT DWORD xhReadInteger4B(HANDLE proc, uintptr_t addr, int offsets[]);
-EXPORT void xhReadString(HANDLE proc, uintptr_t addr, int offsets[], char* buffer, int bufSize);
 EXPORT void xhWriteInteger4B(HANDLE proc, uintptr_t addr, int offsets[], DWORD value);
+
 EXPORT void* xhResolvePointer(HANDLE proc, uintptr_t addr, int offsets[]);
 
 EXPORT BOOL xhListWindowNames();

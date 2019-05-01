@@ -32,6 +32,15 @@ EXPORT void xhReadString(HANDLE proc, uintptr_t addr, int offsets[], char *buffe
 }
 
 /**
+ * Write a string that is 4byte (DWORD)
+ */
+EXPORT void xhWriteString(HANDLE proc, uintptr_t addr, int offsets[], char *buffer) {
+    void *ptr = xhResolvePointer(proc, addr, offsets);
+
+    WriteProcessMemory(proc, ptr, buffer, strlen(buffer) + 1, NULL); // add 1 for null terminator
+}
+
+/**
  * Read an integer that is 4byte (DWORD)
  */
 EXPORT DWORD xhReadInteger4B(HANDLE proc, uintptr_t addr, int offsets[])

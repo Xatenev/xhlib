@@ -21,7 +21,12 @@ int main(void) {
     uintptr_t address3 = 0x50F4F4, offsets3[1] = {0x225};
 
     char buffer[128] = "";
-    xhReadString(handle, address3, offsets3, buffer, sizeof buffer);
+    xhReadString(handle, address3, offsets3, buffer, 128);
+    int oldSize = strlen(buffer);
+
+    
+    char buffer2[] = "meh";
+    xhWriteString(handle, address3, offsets3, buffer2);
     printf("%s", buffer);
 
     return 0;
