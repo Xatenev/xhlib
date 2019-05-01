@@ -75,6 +75,8 @@ EXPORT void xhWriteInteger4B(HANDLE proc, uintptr_t addr, int offsets[], DWORD v
 
 /**
  * Resolve a (possibly) multipointer chain
+ * 
+ * Example: pointer => address + offset => address + offset => address + offset ...
  */
 EXPORT void *xhResolvePointer(HANDLE proc, uintptr_t addr, int offsets[])
 {
