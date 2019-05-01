@@ -10,15 +10,13 @@
 
 EXPORT HANDLE xhInitialize(char procName[]);
 
-EXPORT void xhPrintLastError();
-
-EXPORT void xhReadString(HANDLE proc, uintptr_t addr, int offsets[], char* buffer, int bufferSize);
-EXPORT void xhWriteString(HANDLE proc, uintptr_t addr, int offsets[], char *buffer);
+EXPORT BOOL xhReadString(HANDLE proc, uintptr_t addr, int offsets[], char* buffer, int bufferSize);
+EXPORT BOOL xhWriteString(HANDLE proc, uintptr_t addr, int offsets[], char *buffer);
 
 EXPORT DWORD xhReadInteger4B(HANDLE proc, uintptr_t addr, int offsets[]);
-EXPORT void xhWriteInteger4B(HANDLE proc, uintptr_t addr, int offsets[], DWORD value);
+EXPORT BOOL xhWriteInteger4B(HANDLE proc, uintptr_t addr, int offsets[], DWORD value);
 
-EXPORT void xhInjectDLL(HANDLE proc, char* dllPath);
+EXPORT BOOL xhInjectDLL(HANDLE proc, char* dllPath);
 
 EXPORT void* xhResolvePointer(HANDLE proc, uintptr_t addr, int offsets[]);
 
@@ -27,5 +25,3 @@ EXPORT BOOL xhListProcessNames();
 
 BOOL CALLBACK printProcessNameAndId(DWORD procId);
 BOOL CALLBACK enumWindowCallback(HWND hWnd, LPARAM lparam);
-
-void xhSetLastError(int errorId);

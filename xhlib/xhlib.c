@@ -7,10 +7,11 @@
 
 #include "xhlib.h"
 
-int xhLastError = 0;
-
 /**
  * Initialize a handle
+ * 
+ * Returns HANDLE on success
+ * Returns NULL on failure
  */
 EXPORT HANDLE xhInitialize(char procName[])
 {
@@ -19,7 +20,6 @@ EXPORT HANDLE xhInitialize(char procName[])
 
     if (window == NULL)
     {
-        xhSetLastError(XH_ERR_WINDOW_NOT_FOUND);
         return NULL;
     }
 
@@ -29,7 +29,6 @@ EXPORT HANDLE xhInitialize(char procName[])
 
     if (handle == NULL)
     {
-        xhSetLastError(XH_ERR_PROCESS_NOT_FOUND);
         return NULL;
     }
 
@@ -38,22 +37,28 @@ EXPORT HANDLE xhInitialize(char procName[])
 
 /**
  * Read a string (truncated after X bytes)
+ * 
+ * Returns TRUE on success
+ * Returns FALSE on failure
  */
-EXPORT void xhReadString(HANDLE proc, uintptr_t addr, int offsets[], char *buffer, int bufferSize)
+EXPORT BOOL xhReadString(HANDLE proc, uintptr_t addr, int offsets[], char *buffer, int bufferSize)
 {
     void *ptr = xhResolvePointer(proc, addr, offsets);
 
-    ReadProcessMemory(proc, ptr, buffer, bufferSize, NULL);
+    return ReadProcessMemory(proc, ptr, buffer, bufferSize, NULL);
 }
 
 /**
  * Write a string that is 4byte (DWORD)
+ * 
+ * Returns TRUE on success
+ * Returns FALSE on failure
  */
-EXPORT void xhWriteString(HANDLE proc, uintptr_t addr, int offsets[], char *buffer)
+EXPORT BOOL xhWriteString(HANDLE proc, uintptr_t addr, int offsets[], char *buffer)
 {
     void *ptr = xhResolvePointer(proc, addr, offsets);
 
-    WriteProcessMemory(proc, ptr, buffer, strlen(buffer) + 1, NULL); // add 1 for null terminator
+    return WriteProcessMemory(proc, ptr, buffer, strlen(buffer) + 1, NULL); // add 1 for null terminator
 }
 
 /**
@@ -64,7 +69,11 @@ EXPORT DWORD xhReadInteger4B(HANDLE proc, uintptr_t addr, int offsets[])
     DWORD value = 0;
     void *ptr = xhResolvePointer(proc, addr, offsets);
 
-    ReadProcessMemory(proc, ptr, &value, sizeof(value), NULL);
+    BOOL success = ReadProcessMemory(proc, ptr, &value, sizeof(value), NULL);
+
+    if(!success) {
+        return FALSE;
+    }
 
     return value;
 }
@@ -72,17 +81,17 @@ EXPORT DWORD xhReadInteger4B(HANDLE proc, uintptr_t addr, int offsets[])
 /**
  * Write an integer that is 4byte (DWORD)
  */
-EXPORT void xhWriteInteger4B(HANDLE proc, uintptr_t addr, int offsets[], DWORD value)
+EXPORT BOOL xhWriteInteger4B(HANDLE proc, uintptr_t addr, int offsets[], DWORD value)
 {
     void *ptr = xhResolvePointer(proc, addr, offsets);
 
-    WriteProcessMemory(proc, ptr, &value, sizeof(value), NULL);
+    return WriteProcessMemory(proc, ptr, &value, sizeof(value), NULL);
 }
 
 /** 
  * Export a DLL into a remote process
  */
-EXPORT void xhInjectDLL(HANDLE proc, char *dllPath)
+EXPORT BOOL xhInjectDLL(HANDLE proc, char *dllPath)
 {
     LPVOID dllPathAddressInRemoteMemory = VirtualAllocEx(proc, NULL, strlen(dllPath), MEM_RESERVE | MEM_COMMIT, PAGE_EXECUTE_READWRITE);
 
@@ -90,7 +99,7 @@ EXPORT void xhInjectDLL(HANDLE proc, char *dllPath)
 
     if (!successWrite)
     {
-        xhSetLastError(XH_ERR_DLL_WPM_FAIL);
+        return FALSE;
     }
 
     // Returns a pointer to the LoadLibrary address.
@@ -99,13 +108,16 @@ EXPORT void xhInjectDLL(HANDLE proc, char *dllPath)
 
     if (loadLibraryAddress == NULL)
     {
-        xhSetLastError(XH_ERR_DLL_LOAD_LIBRARY_FAIL);
+        return FALSE;
     }
+
     HANDLE remoteThread = CreateRemoteThread(proc, NULL, 0, (LPTHREAD_START_ROUTINE)loadLibraryAddress, dllPathAddressInRemoteMemory, 0, NULL);
 
     if(remoteThread == NULL) {
-        xhSetLastError(XH_ERR_CREATE_THREAD_FAIL);
+        return FALSE;
     }
+
+    return TRUE;
 }
 
 /**
@@ -119,7 +131,11 @@ EXPORT void *xhResolvePointer(HANDLE proc, uintptr_t addr, int offsets[])
 
     for (int i = 0; i < sizeof offsets / sizeof(int); i++)
     {
-        ReadProcessMemory(proc, target, &target, sizeof(target), 0);
+        BOOL success = ReadProcessMemory(proc, target, &target, sizeof(target), 0);
+
+        if(!success) {
+            return FALSE;
+        }
 
         target += offsets[i];
     }
@@ -167,11 +183,6 @@ EXPORT BOOL xhListWindowNames()
     return TRUE;
 }
 
-EXPORT void xhPrintLastError()
-{
-    printf("XH Error: %d, Last Windows API Error: %d\nxhlib.h for XH errors\nhttps://docs.microsoft.com/en-us/windows/desktop/debug/system-error-codes for WINAPI errors\n", xhLastError, GetLastError());
-}
-
 /* Not exported */
 BOOL CALLBACK printProcessNameAndId(DWORD procId)
 {
@@ -214,9 +225,4 @@ BOOL CALLBACK enumWindowCallback(HWND hWnd, LPARAM lparam)
     }
 
     return TRUE;
-}
-
-void xhSetLastError(int errorId)
-{
-    xhLastError = errorId;
 }
