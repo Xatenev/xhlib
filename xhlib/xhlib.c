@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <string.h>
 #include <windows.h>
 #include <wchar.h>
 #include <stdint.h>
@@ -6,6 +7,9 @@
 
 #include "xhlib.h"
 
+/**
+ * Initialize a handle
+ */
 EXPORT HANDLE xhInitialize(char procName[])
 {
     DWORD windowId;
@@ -17,6 +21,19 @@ EXPORT HANDLE xhInitialize(char procName[])
     return handle;
 }
 
+/**
+ * Read a string (truncated after X bytes)
+ */
+EXPORT void xhReadString(HANDLE proc, uintptr_t addr, int offsets[], char *buffer, int bufferSize)
+{
+    void *ptr = xhResolvePointer(proc, addr, offsets);
+
+    ReadProcessMemory(proc, ptr, buffer, bufferSize, NULL);
+}
+
+/**
+ * Read an integer that is 4byte (DWORD)
+ */
 EXPORT DWORD xhReadInteger4B(HANDLE proc, uintptr_t addr, int offsets[])
 {
     DWORD value = 0;
@@ -27,12 +44,18 @@ EXPORT DWORD xhReadInteger4B(HANDLE proc, uintptr_t addr, int offsets[])
     return value;
 }
 
-EXPORT DWORD xhWriteInteger4B(HANDLE proc, uintptr_t addr, int offsets[], DWORD value) {
+/**
+ * Write an integer that is 4byte (DWORD)
+ */
+EXPORT void xhWriteInteger4B(HANDLE proc, uintptr_t addr, int offsets[], DWORD value) {
     void *ptr = xhResolvePointer(proc, addr, offsets);
 
     WriteProcessMemory(proc, ptr, &value, sizeof(value), NULL);
 }
 
+/**
+ * Resolve a (possibly) multipointer chain
+ */
 EXPORT void *xhResolvePointer(HANDLE proc, uintptr_t addr, int offsets[])
 {
     char *target = (char *)addr;
@@ -48,6 +71,10 @@ EXPORT void *xhResolvePointer(HANDLE proc, uintptr_t addr, int offsets[])
 }
 
 /* Development helper functions */
+
+/**
+ * List all process names
+ */ 
 EXPORT BOOL xhListProcessNames()
 {
     DWORD processes[1024], cbNeeded;
@@ -70,6 +97,9 @@ EXPORT BOOL xhListProcessNames()
     return TRUE;
 }
 
+/**
+ * List all window names
+ */ 
 EXPORT BOOL xhListWindowNames()
 {
     puts("Window List");

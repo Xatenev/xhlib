@@ -4,7 +4,8 @@
 
 EXPORT HANDLE xhInitialize(char procName[]);
 EXPORT DWORD xhReadInteger4B(HANDLE proc, uintptr_t addr, int offsets[]);
-EXPORT DWORD xhWriteInteger4B(HANDLE proc, uintptr_t addr, int offsets[], DWORD value);
+EXPORT void xhReadString(HANDLE proc, uintptr_t addr, int offsets[], char* buffer, int bufSize);
+EXPORT void xhWriteInteger4B(HANDLE proc, uintptr_t addr, int offsets[], DWORD value);
 EXPORT void* xhResolvePointer(HANDLE proc, uintptr_t addr, int offsets[]);
 
 EXPORT BOOL xhListWindowNames();
