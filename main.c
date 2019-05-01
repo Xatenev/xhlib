@@ -33,5 +33,6 @@ int main(void) {
     xhWriteString(handle, address3, offsets3, buffer2);
     printf("%s", buffer);*/
 
+    xhCleanup(handle);
     return 0;
 }

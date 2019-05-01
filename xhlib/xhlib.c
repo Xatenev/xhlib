@@ -36,6 +36,18 @@ EXPORT HANDLE xhInitialize(char procName[])
 }
 
 /**
+ * Performs cleanup tasks, should always be called at the end
+ */
+EXPORT BOOL xhCleanup(HANDLE proc) {
+    if(!CloseHandle(proc)) {
+        return FALSE;
+    }
+
+
+    return TRUE;
+}
+
+/**
  * Read a string (truncated after X bytes)
  * 
  * Returns TRUE on success
