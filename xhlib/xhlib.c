@@ -14,9 +14,20 @@ EXPORT HANDLE xhInitialize(char procName[])
 {
     DWORD windowId;
     HWND window = FindWindowA(NULL, procName);
+
+    if(window == NULL) {
+        setXhLastError(XH_ERR_WINDOW_NOT_FOUND);
+        return;
+    }
+
     GetWindowThreadProcessId(window, &windowId);
 
     HANDLE handle = OpenProcess(PROCESS_ALL_ACCESS, FALSE, windowId);
+
+    if(handle == NULL) {
+        setXhLastError(XH_ERR_PROCESS_NOT_FOUND);
+        return;
+    }
 
     return handle;
 }
@@ -119,6 +130,10 @@ EXPORT BOOL xhListWindowNames()
     return TRUE;
 }
 
+EXPORT unsigned int xhGetLastError() {
+    return xhLastError;
+}
+
 /* Not exported */
 BOOL CALLBACK printProcessNameAndId(DWORD procId)
 {
@@ -161,4 +176,8 @@ BOOL CALLBACK enumWindowCallback(HWND hWnd, LPARAM lparam)
     }
 
     return TRUE;
+}
+
+void setXhLastError(int errorId) {
+    xhLastError = errorId;
 }

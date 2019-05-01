@@ -1,5 +1,5 @@
 cd build;
-cl /LD ../xhlib/xhlib.c /link user32.lib && cl ../main.c /link xhlib.lib && main.exe
+build.bat;
 
 -Player Addresses:
 Player Base Address - 0x50F4F4
