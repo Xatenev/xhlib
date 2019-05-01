@@ -1,0 +1,26 @@
+cd build;
+cl /LD ../xhlib/xhlib.c /link user32.lib && cl ../main.c /link xhlib.lib && main.exe
+
+-Player Addresses:
+Player Base Address - 0x50F4F4
+
+-Player Offsets
+Health - 0xF8
+Amour - 0xFC
+Player Jump - 0x3C
+Player Height - 0xC
+Player Crouch - 0x5C (3.375=crouch | 4.5=stand)
+Player Speed (going forward) - 0x80 (1=normal | 10=fastest)
+Player Position - 0x4 & 0x8
+Player Look Angles - 0x40 & 0x44 [Float]
+Player Name String - 0x225 [String]
+
+-Player Gun Offsets
+AR Ammo - 0x150
+AR Extra Mag - 0x128
+Pistol Ammo - 0x13C
+Pistol Extra Mag - 0x114
+Grenade Ammo/Value - 0x158
+Enable Akimbo - 0x10C (0=disabled | 1=enabled)
+Akimbo Ammo - 0x15C
+Akimbo Extra Mag - 0x134
